@@ -1,0 +1,474 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>howto-gen-seqs-from-skel</title>
+  </head>
+  <body>
+    <div align="center"><b>How to generate *very* long list of seqs from
+        skeleton.</b><br>
+    </div>
+    (This is just one way, and it is a slow-and-dirty method, but seems
+    to work. <br>
+    All steps are fast except last one, which is taking maybe 20 hours.<br>
+    Will need to optimize last step ;-)<br>
+    <br>
+    Example A.&nbsp; Skel of length 50.<br>
+    <br>
+    <code>The head16 and tail16 can only have 7, 8, or 9 CG total.<br>
+      That is roughly 40-60% total c-and-or-g in each of head and tail.<br>
+      <br>
+      The first skeleton seq (new and old) shown below, <br>
+      has 50 nt (indexed 0 to 49).<br>
+      <br>
+      GGnnnnnnAAGGAUGGNNGGUUACUUCGGUAACCCCAUCCAAnnnnnnnn<br>
+      <br>
+      GGSSSSSSAAGGAUGGNNGGUUACUUCGGUAACCCCAUCCAASSSSSSSS<br>
+      01234567890123456789012345678901234567890123456789 &nbsp;<br>
+      ---------------^&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      ^---------------<br>
+      ----head16-----^
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      ^----tail16-----<br>
+      ---------------^&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      ^---------------<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      0123456789012345 <br>
+      7,8, or 9 CG
+      tot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      7,8, or 9 CG tot<br>
+      GGnnnnnnAAGGAUGG<br>
+      GGSSSSSSAAGGAUGG<br>
+      12&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 34&nbsp; 56<br>
+      0123456789012345<br>
+      ---------------^<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      &nbsp;<br>
+      7,8, or 9 CG tot<br>
+      <br>
+      since already has 6 CG<br>
+      1, 2, or 3 addtional CG<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      CCAUCCAAnnnnnnnn<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      CCAUCCAASSSSSSSS<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      12&nbsp; 34<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      4567890123456789<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      ^---------------<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      0123456789012345<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      7,8, or 9 CG tot<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      &nbsp;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      since already has 4 CG's<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+
+
+      3, 4, or 5 additional CG<br>
+    </code><br>
+    (1.) Create list of ALL 4096 possible seq for head16 portion, which
+    has 6 "n" spots. (4^6=4096)<br>
+    <br>
+    <code># perm6.py writes all permutations of 6 nt (4096 lines output)<br>
+      # from aaaaaa to uuuuuu<br>
+      import itertools<br>
+      import click<br>
+      i2c = {0: 'a', 1: 'c', 2: 'g', 3: 'u'}<br>
+      def perm(n, seq):<br>
+      &nbsp;&nbsp;&nbsp; for p in itertools.product(seq, repeat=n):<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; click.echo("".join(p))<br>
+      #&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; click.echo("\n")<br>
+      <br>
+      perm(6, "acgu")<br>
+      <br>
+      <br>
+      python3&nbsp; perm6.py &gt; perm6.out<br>
+      <br>
+      ### Display total count of c and/or g for each of 4096 seq in
+      perm6.out<br>
+      cat perm6.out| gawk '{print $0, gsub(/[cg]/,"")}'<br>
+      <br>
+      ### Use grep to select only the 2624 lines with desired cg count
+      (1, 2, or 3)<br>
+      cat perm6.out| gawk '{print $0, gsub(/[cg]/,"")}' | grep [1-3]<br>
+      <br>
+      cat perm6.out| gawk '{print $0, gsub(/[cg]/,"")}' | grep [1-3] |
+      wc -l<br>
+      2624<br>
+      <br>
+      ### strip the number out, leaving only the 6-character seq<br>
+      cat perm6.out| gawk '{print $0, gsub(/[cg]/,"")}' | grep [1-3] |
+      awk '{print $1}'&nbsp; <br>
+      <br>
+    </code><code><code># Assemble each of the 2624 head16 seq by
+        prepending and appending fixed strings before and after nnnnnn<br>
+      </code>$ cat perm6.out| gawk '{print $0, gsub(/[cg]/,"")}' | grep
+      [1-3] | awk '{print "gg"$1"AAGGAUGG"}' &gt; head16.txt<br>
+      <br>
+      $ cat head16.txt ### Output is 2624 lines, each 16 char long (+ 1
+      newline char):<br>
+      <br>
+      ggaaaaacAAGGAUGG<br>
+      ggaaaaagAAGGAUGG<br>
+      ggaaaacaAAGGAUGG<br>
+      ggaaaaccAAGGAUGG<br>
+      ggaaaacgAAGGAUGG<br>
+      ggaaaacuAAGGAUGG<br>
+      ggaaaagaAAGGAUGG<br>
+      ggaaaagcAAGGAUGG<br>
+      ggaaaaggAAGGAUGG<br>
+      ggaaaaguAAGGAUGG<br>
+      ...<br>
+      ...<br>
+      ...<br>
+      gguuuuucAAGGAUGG<br>
+      gguuuuugAAGGAUGG<br>
+      <br>
+      <br>
+    </code>(2.&nbsp; Create middle.txt with all 16 possible seq (2 "N"
+    spots) for middle18 portion (between head16 and tail 16)<br>
+    <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      NNGGUUACUUCGGUAACC<br>
+      <br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      NNGGUUACUUCGGUAACC<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      678901234567890123<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+      123456789012345678<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+    </code><code><code>aaGGUUACUUCGGUAACC<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+        acGGUUACUUCGGUAACC</code> <br>
+      <br>
+      $python3 perm2.py <br>
+      aa<br>
+      ac<br>
+      ag<br>
+      au<br>
+      ca<br>
+      cc<br>
+      cg<br>
+      cu<br>
+      ga<br>
+      gc<br>
+      gg<br>
+      gu<br>
+      ua<br>
+      uc<br>
+      ug<br>
+      uu<br>
+      <br>
+      $ cat perm2.out | awk '{print $1"GGUUACUUCGGUAACC"}' &gt;
+      middle.txt<br>
+      $ cat middle.txt <br>
+      aaGGUUACUUCGGUAACC<br>
+      acGGUUACUUCGGUAACC<br>
+      agGGUUACUUCGGUAACC<br>
+      auGGUUACUUCGGUAACC<br>
+      caGGUUACUUCGGUAACC<br>
+      ccGGUUACUUCGGUAACC<br>
+      cgGGUUACUUCGGUAACC<br>
+      cuGGUUACUUCGGUAACC<br>
+      gaGGUUACUUCGGUAACC<br>
+      gcGGUUACUUCGGUAACC<br>
+      ggGGUUACUUCGGUAACC<br>
+      guGGUUACUUCGGUAACC<br>
+      uaGGUUACUUCGGUAACC<br>
+      ucGGUUACUUCGGUAACC<br>
+      ugGGUUACUUCGGUAACC<br>
+      uuGGUUACUUCGGUAACC<br>
+      <br>
+    </code>(3.) Create tail16.txt in same way as we created head16.txt
+    in step 1.<br>
+    <br>
+    (4.) Finally generate all possible seqs by using bash-script with
+    middle changing most often. That is, first 16 lines of ouptput have
+    the same head and same tail for each the 16 different middle
+    portions.<br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <code>&nbsp;$ cat f1.txt<br>
+      A<br>
+      B<br>
+      <br>
+      $ cat f2.txt<br>
+      aa<br>
+      ac<br>
+      ag<br>
+      au<br>
+      ca<br>
+      cc<br>
+      <br>
+      $ ./f1f2.sh f1.txt f2.txt<br>
+      Aaa<br>
+      Aac<br>
+      Aag<br>
+      Aau<br>
+      Aca<br>
+      Acc<br>
+      Baa<br>
+      Bac<br>
+      Bag<br>
+      Bau<br>
+      Bca<br>
+      Bcc <br>
+      <br>
+    </code><br>
+    Run 1 of 2 of ./f1f2.sh combines head and middle to&nbsp; create
+    41984-line hm.txt (hm means "head an middle").<br>
+    &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <br>
+    <code><code><br>
+        $&nbsp; ./f1f2.sh&nbsp; head16.txt middle.txt&nbsp; &gt; hm.txt</code>&nbsp;&nbsp;&nbsp;
+
+
+      <br>
+      <br>
+      wc -l head16.txt middle.txt hm.txt<br>
+      &nbsp;&nbsp; 2624 head16.txt<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; 16 middle.txt<br>
+      &nbsp; 41984 hm.txt<br>
+      <br>
+      <br>
+    </code>Run 2 of 2 can take a *very* long time to finish, as it is
+    going to write one huge file, in this containing&nbsp; <code>41884
+      x 46592 lines = 1,956,118,528 lines, or almost 2 million lines.
+      1956118528 lines x (50 char + 1 newline) = 99,762,044,928 bytes
+      total.<br>
+      <br>
+      Wrote a 5.8 GiB compressed file in just over 17 minutes. <br>
+      <br>
+      &nbsp;./fas.awk&nbsp; tail16.txt hm.txt | gzip --fast | pv &gt;
+      fas.txt.gz<br>
+      5.81GiB 0:17:11 [5.77MiB/s]
+      [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <br>
+      <br>
+    </code><code><code>But gzip --list won't correct tell uncompressed
+        size for compressed files &gt; 4gig.<br>
+      </code><br>
+      Using lzop instead of gzip is faster (13.7 minutes vs 17), even
+      tho resulting compressed file is almost double (11.6 Gib for lzo
+      vs 5.8 Gib for gz):<br>
+      <br>
+      &nbsp;$ ./fas.awk&nbsp; tail16.txt hm.txt | lzop - -c
+      --no-checksum&nbsp; | pv &gt;
+      /home/linuxbrew/junk/fas.txtnochksum.lzo<br>
+      11.6GiB 0:13:39 [14.5MiB/s]
+      [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &lt;=&gt;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ]<br>
+      aeh-group@aehgroup-MS-7641 ~/bin/try4 $ lzop --info
+      /home/linuxbrew/junk/fas.txtnochksum.lzo<br>
+      <br>
+      LZO1X-1&nbsp;&nbsp;&nbsp;&nbsp; 99762044928 12459981076&nbsp;
+      12.5%&nbsp; 2018-03-30 03:03&nbsp;
+      /home/linuxbrew/junk/fas.txtnochksum<br>
+      &nbsp;&nbsp; 1.030 2.080 0.940&nbsp; Fl: 0x0300000c&nbsp; Mo:
+      000000000000&nbsp; Me: 1/5&nbsp; OS:&nbsp; 3<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <br>
+      ### *but* lzop -l does correctly list exact number of bytes if
+      were were to un-compress file (without having to un-compress!).<br>
+      <br>
+      ### And simple calclinz.sh script can do quick sanity check by
+      calcualating number of lines that uncompress would generate:<br>
+      <br>
+      ./calclinz.sh&nbsp; /home/linuxbrew/junk/fas.txt.lzop&nbsp; 50<br>
+      /home/linuxbrew/junk/fas.txt.lzop 99762044928 bytes-uncomp&nbsp;
+      chars-per-line-including-nl= 51&nbsp; numlines= 1956118528<br>
+    </code><code><code><br>
+        Taking only about 40-60 secs, above command gives us a quick
+        sanity check: confidence that compressed file is not corrupt and
+        contains what we expect (as far as the number of lines). <br>
+      </code><br>
+      ### SUMMARY: tho it creates bigger files, .lzo is preferred to gz
+      because it is faster. And also important lzo has a correctly
+      working -l option, unlike gzip -l (which reports nonsense if .gz
+      file is bigger than 4g. The lzo --info correctly provides parsable
+      uncompressed file-size for a quick sanity checks (under a a minute
+      for 11G .lzo file) by calclinz.sh script (which calculates number
+      of lines).<br>
+      <br>
+      ### Note: The lz4 was slower than lzop (18.5 minutes) and a little
+      better compression than lzo. Probably slower since cannot do
+      --no-checksup with lz4. Also there is no lz4 --info command to do
+      sanity check).<br>
+      <br>
+      &nbsp;./fas.awk&nbsp; tail16.txt hm.txt | lz4 - -c -1 | pv &gt;
+      /home/linuxbrew/junk/fas.txt.lz4<br>
+      11.4GiB 0:18:27 [10.5MiB/s]
+      [&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <br>
+      <br>
+      <br>
+      aeh-group@aehgroup-MS-7641 ~/bin/try4 $ lzop -l -v
+      /home/linuxbrew/junk/fas.txt.lzop <br>
+      Method&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      Length&nbsp;&nbsp;&nbsp; Packed&nbsp;
+      Ratio&nbsp;&nbsp;&nbsp;&nbsp; Date&nbsp;&nbsp;&nbsp;
+      Time&nbsp;&nbsp; Name<br>
+      ------&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      ------&nbsp;&nbsp;&nbsp; ------&nbsp;
+      -----&nbsp;&nbsp;&nbsp;&nbsp; ----&nbsp;&nbsp;&nbsp;
+      ----&nbsp;&nbsp; ----<br>
+      LZO1X-1(15) 99762044928 12462360781&nbsp; 12.5%&nbsp; 2018-03-30
+      00:41&nbsp; /home/linuxbrew/junk/fas.txt<br>
+      <br>
+      <br>
+      <br>
+      <br>
+      Each line in unique and has 51 chars per line, so total size of
+      file = 99,762,044,928 bytes or almost 100 GB.&nbsp; <br>
+      <br>
+      $ ./f1f2.sh&nbsp; hm.txt tail16.txt &gt; skel01.txt<br>
+      <br>
+      On a test box, it has taken almost an hour to write the first 5%
+      (5GB), so it may take about 20 hours to finish. <br>
+      I'll have to do some optimizing to speed it up, maybe use parallel
+      or some other rewrites.<br>
+      <br>
+    </code>Some tricks to try speeding up ...<br>
+    <br>
+    <code>New f2prepend.sh and f2append.sh do NOT add newline: they just
+      output a continous stream containing only 4 characters: a,c,g, and
+      u.<br>
+      <br>
+      This stream can be compressed by rnac2 whose only command line arg
+      is the number of bytes to expect on stdin<br>
+      The output of rnac2 can be further compressed by gzip<br>
+      <br>
+      Then everything should fit in the ramdisk /run/user/1000&nbsp; (I
+      increase max from 10% to 20% of ram, so with 16gig tmpfs max is
+      3.2g).<br>
+      That way all the reads and writes are from ramdisk, not hard-disk.<br>
+      <br>
+      Test case:&nbsp; hm.txt is 41984 lines. Each line = 16 + 18 chars
+      + 1 newline for each of all possible head16.txt and middle.txt
+      permutations. Size =&nbsp; 41984 x 35 = 1469440 bytes.<br>
+      <br>
+      1436 -rw-rw-r-- 1 aeh-group aeh-group 1469440 Mar 29 16:49 hm.txt<br>
+      1396 -rw-rw-r-- 1 aeh-group aeh-group 1427456 Mar 29 16:59
+      hmfixed.txt&nbsp; (Removed the newline chars, so 41984 x 34
+      =&nbsp; 1427456 bytes)<br>
+      &nbsp;100 -rw-rw-r-- 1 aeh-group aeh-group&nbsp;&nbsp; 83795 Mar
+      29 18:04 hmfixed.txt.g4.gz (&lt; 5.88% of the size of
+      un-compressed hmfixed.txt)<br>
+      <br>
+      <br>
+      ### Compress<br>
+      aeh-group@aehgroup-MS-7641 /run/user/1000/try4 $&nbsp; <br>
+      <br>
+      cat hmfixed.txt | rnac2 1427456 | gzip --fast &gt;
+      hmfixed.txt.g4.gz<br>
+      arg1_fsize_in_bytes 1427456<br>
+      bytes processed&nbsp;&nbsp;&nbsp;&nbsp; 1427456<br>
+      <br>
+      #### Uncompress and compare to original...<br>
+      <br>
+      cat hmfixed.txt.g4.gz | gunzip | rnau &gt; hmfixed-after-rnau.txt<br>
+      <br>
+      -rw-rw-r-- 1 aeh-group aeh-group&nbsp; 1427456 Mar 29 18:07
+      hmfixed-after-rnau.txt<br>
+      aeh-group@aehgroup-MS-7641 /run/user/1000/try4 $ diff
+      hmfixed.txt&nbsp; hmfixed-after-rnau.txt <br>
+      aeh-group@aehgroup-MS-7641 /run/user/1000/try4 $ <br>
+      <br>
+      <br>
+      aeh-group@aehgroup-MS-7641 /run/user/1000/try4 $ ./f2prepend.sh
+      hm.txt tail16.txt | rnac2 97572966400 | gzip --fast | pv &gt;
+      cass01.g4.gz<br>
+      <br>
+      <br>
+    </code><code>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+    </code>
+  </body>
+</html>
