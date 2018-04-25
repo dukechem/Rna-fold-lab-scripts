@@ -1,0 +1,9 @@
+=== readme-prelim01.htm ===
+Please Verify you can do the filtering/analysis with with the excel file created so far.
+And maybe provide some example results.
+You should be able to open 1629104-excel.xlsx in excel directly, without opening the csv at all.
+The csv file would eventually grow to over 122x10^6 cassettes, and then be unwieldly or impossible to do in excel.
+At that point, we'll have to do the equivalent analysis with additional command-line scripts.
+Note: For tricks to get excel to open csv with millions of rows
+see https://www.masterdataanalysis.com/ms-excel/analyzing-50-million-records-excel/
+This folder contains the output for 1629104 (~ 1.6 x 10^6) cassettes.
